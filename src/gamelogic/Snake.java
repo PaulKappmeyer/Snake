@@ -6,38 +6,44 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 public class Snake {
-	
+
 	private int bodysize;
 	private LinkedList<Bodypart> body;
 	private Bodypart head;
-	private Direction direction = Direction.WEST;
+	private Direction direction;
 
 	// time since last move
 	private double tslm;
 	private final double MOVE_TIME = 0.125;
-	
+
 	public class Bodypart {
-		private int x;
-		private int y;
+		private int currentX;
+		private int currentY;
+		private int targetX;
+		private int targetY;
+		private double drawX;
+		private double drawY;
 
 		private Bodypart(int x, int y) {
-			this.x = x;
-			this.y = y;
+			this.currentX = x;
+			this.currentY = y;
+			drawX = x * bodysize;
+			drawY = y * bodysize;
 		}
 
 		public void draw(Graphics graphics) {
 			graphics.setColor(Color.WHITE);
-			graphics.fillRect(x * bodysize, y * bodysize, bodysize, bodysize);
+			graphics.fillRect((int) drawX, (int) drawY, bodysize, bodysize);
 			graphics.setColor(Color.LIGHT_GRAY);
-			graphics.drawRect(x * bodysize, y * bodysize, bodysize, bodysize);
+			graphics.drawRect((int) drawX, (int) drawY, bodysize, bodysize);
 		}
-		
+
 		public int getX() {
-			return x;
+			return currentX;
 		}
-		
+
 		public int getY() {
-			return y;
+			return currentY;
 		}
 	}
 
@@ -46,94 +52,74 @@ public class Snake {
 		SOUTH,
 		WEST,
 		EAST;
-		
+
 		public boolean isOpposite(Direction dir) {
 			switch(this) {
 			case NORTH:
 				return dir == SOUTH;
-				
+
 			case SOUTH:
 				return dir == NORTH;
-			
+
 			case WEST:
 				return dir == EAST;
-				
+
 			case EAST:
 				return dir == WEST;
 			}
 			return false;
 		}
 	}
-	
+
 	public Snake(int bodysize) {
 		this.bodysize = bodysize;
 		body = new LinkedList<>();
 		head = new Bodypart(1, 1);
+		direction = Direction.WEST;
+		head.targetX = head.currentX + 1;
+		head.targetY = head.currentY;
 		body.add(head);
 	}
 
 	public void draw(Graphics graphics) {
 		// draw body
 		body.forEach(part -> part.draw(graphics));
-		
+
 		// draw head
 		graphics.setColor(Color.GREEN);
-		graphics.fillOval(head.x * bodysize, head.y * bodysize, bodysize, bodysize);
+		graphics.fillOval((int) head.drawX, (int) head.drawY, bodysize, bodysize);
 	}
 
 	public void update(double tslf) {
+		// update body: draw position
+		for (Bodypart part : body) {
+			part.drawX = (part.currentX + tslm/MOVE_TIME * (part.targetX - part.currentX)) * bodysize;
+			part.drawY = (part.currentY + tslm/MOVE_TIME * (part.targetY - part.currentY)) * bodysize;
+		}
+
 		tslm += tslf;
 		if (tslm < MOVE_TIME) {
 			return;
 		}
 		tslm -= MOVE_TIME;
-		
-		// update tail
+
+		// update tail: grid position
 		Iterator<Bodypart> it = body.descendingIterator();
 		Bodypart current = it.hasNext() ? it.next() : null;
 		while(current != null && it.hasNext()){ 
 			Bodypart next = it.next();
-			current.x = next.x;
-			current.y = next.y;
-			
-			current = next;
-        } 
-		
-		// update position
-		switch(direction) {
-		case NORTH:
-			head.y--;
-			
-			if (head.y < 0) {
-				head.y += Main.NUM_ROWS;
-			}
-			break;
+			current.currentX = next.currentX;
+			current.currentY = next.currentY;
+			current.targetX = next.targetX;
+			current.targetY = next.targetY;
 
-		case SOUTH:
-			head.y++;
-			
-			if (head.y >= Main.NUM_ROWS) {
-				head.y -= Main.NUM_ROWS;
-			}
-			break;
-		
-		case WEST:
-			head.x++;
-			
-			if (head.x >= Main.NUM_COLS) {
-				head.x -= Main.NUM_COLS;
-			}
-			break;
-			
-		case EAST:
-			head.x--;
-			
-			if (head.x < 0) {
-				head.x += Main.NUM_COLS;
-			}
-			break;
-		}
-		
+			current = next;
+		} 
+
+		// update head: grid position
+		head.currentX = head.targetX;
+		head.currentY = head.targetY;
+
 		// check collision
 		int collision_index;
 		int size = body.size();
@@ -142,35 +128,77 @@ public class Snake {
 			if (part == head) {
 				continue;
 			}
-			
-			if (part.x == head.x && part.y == head.y) {
+
+			if (part.currentX == head.currentX && part.currentY == head.currentY) {
 				break;
 			}
 		}
 		for (int i = collision_index; i < size; i++) {
 			body.removeLast();
 		}
-		
+
 		// check food
-		if (head.x == Main.food.getX() && head.y == Main.food.getY()) {
+		if (head.currentX == Main.food.getX() && head.currentY == Main.food.getY()) {
 			Bodypart last = body.peekLast();
-			body.add(new Bodypart(last.x, last.y));
-			
+			Bodypart newPart = new Bodypart(last.currentX, last.currentY);
+			newPart.targetX = last.currentX;
+			newPart.targetY = last.currentY;
+			body.add(newPart);
+
 			Main.food.randomLocation(body);
 		}
+
+		// move
+		switch(direction) {
+		case NORTH:
+			head.targetY--;
+
+			if (head.targetY < 0) {
+				head.currentY += Main.NUM_ROWS;
+				head.targetY += Main.NUM_ROWS;
+			}
+			break;
+
+		case SOUTH:
+			head.targetY++;
+
+			if (head.targetY >= Main.NUM_ROWS) {
+				head.currentY -= Main.NUM_ROWS;
+				head.targetY -= Main.NUM_ROWS;
+			}
+			break;
+
+		case WEST:
+			head.targetX++;
+
+			if (head.targetX >= Main.NUM_COLS) {
+				head.currentX -= Main.NUM_COLS;
+				head.targetX -= Main.NUM_COLS;
+			}
+			break;
+
+		case EAST:
+			head.targetX--;
+
+			if (head.targetX < 0) {
+				head.currentX += Main.NUM_COLS;
+				head.targetX += Main.NUM_COLS;
+			}
+			break;
+		}
 	}
-	
+
 	public void move(Direction desiredDirection) {
 		if (direction.isOpposite(desiredDirection)) {
 			return;
 		}
 		direction = desiredDirection;
 	}
-	
+
 	public int getLength() {
 		return body.size();
 	}
-	
+
 	public LinkedList<Bodypart> getBody(){
 		return body;
 	}
