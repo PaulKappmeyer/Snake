@@ -48,9 +48,9 @@ public class Main extends GameBase implements KeyListener {
 		graphics.setColor(Color.LIGHT_GRAY);
 		graphics.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-		snake.draw(graphics);
-		
 		food.draw(graphics);
+		
+		snake.draw(graphics);
 		
 		graphics.setColor(Color.BLACK);
 		graphics.drawString("Länge: " + snake.getLength(), 10, 10);

@@ -105,17 +105,41 @@ public class Snake {
 		body.add(head);
 		int initalLength = 2;
 		for (int i = 0; i < initalLength; i++) {
-			body.add(new Bodypart(head));
+			body.add(new Bodypart(body.peekLast()));
 		}
 	}
 
 	public void draw(Graphics graphics) {
-		Iterator<Bodypart> it = body.descendingIterator();
-		while (it.hasNext()) { 
-			it.next().draw(graphics);
-        } 
+		// left border loop
+		graphics.translate(-Main.SCREEN_WIDTH, 0);
+		drawSnake(graphics);
+		graphics.translate(Main.SCREEN_WIDTH, 0);
 		
-		// draw head
+		// right border loop
+		graphics.translate(Main.SCREEN_WIDTH, 0);
+		drawSnake(graphics);
+		graphics.translate(-Main.SCREEN_WIDTH, 0);
+
+		// top border loop
+		graphics.translate(0, -Main.SCREEN_HEIGHT);
+		drawSnake(graphics);
+		graphics.translate(0, Main.SCREEN_HEIGHT);
+		
+		// top border looping
+		graphics.translate(0, Main.SCREEN_HEIGHT);
+		drawSnake(graphics);
+		graphics.translate(0, -Main.SCREEN_HEIGHT);
+		
+		// normal drawing in vies
+		drawSnake(graphics);
+	}
+	
+	private void drawSnake(Graphics graphics) {
+		// draw body
+		Iterator<Bodypart> it = body.descendingIterator();
+		it.forEachRemaining(part -> part.draw(graphics));
+		
+		// draw head: eyes
 		graphics.setColor(new Color(255, 255, 255, 200));
 		graphics.fillOval((int) (head.drawX +  5./24 * bodysize), (int) head.drawY + bodysize/4, bodysize/4, bodysize/4);
 		graphics.fillOval((int) (head.drawX + 13./24 * bodysize), (int) head.drawY + bodysize/4, bodysize/4, bodysize/4);
