@@ -103,7 +103,7 @@ public class Snake {
 		head.targetX = head.currentX + 1;
 		head.targetY = head.currentY;
 		body.add(head);
-		int initalLength = 50;
+		int initalLength = 2;
 		for (int i = 0; i < initalLength; i++) {
 			body.add(new Bodypart(head));
 		}
@@ -114,6 +114,11 @@ public class Snake {
 		while (it.hasNext()) { 
 			it.next().draw(graphics);
         } 
+		
+		// draw head
+		graphics.setColor(new Color(255, 255, 255, 200));
+		graphics.fillOval((int) (head.drawX +  5./24 * bodysize), (int) head.drawY + bodysize/4, bodysize/4, bodysize/4);
+		graphics.fillOval((int) (head.drawX + 13./24 * bodysize), (int) head.drawY + bodysize/4, bodysize/4, bodysize/4);
 	}
 
 	public void update(double tslf) {
