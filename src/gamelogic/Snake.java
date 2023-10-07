@@ -4,9 +4,12 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Random;
 
 public class Snake {
 
+	private static final Random random = new Random();
+	
 	private int bodysize;
 	private LinkedList<Bodypart> body;
 	private Bodypart head;
@@ -23,19 +26,40 @@ public class Snake {
 		private int targetY;
 		private double drawX;
 		private double drawY;
+		private Color color;
 
-		private Bodypart(int x, int y) {
-			this.currentX = x;
-			this.currentY = y;
-			drawX = x * bodysize;
-			drawY = y * bodysize;
+		private Bodypart(int currentX, int currentY, Color color) {
+			this.currentX = currentX;
+			this.currentY = currentY;
+			this.drawX = currentX * bodysize;
+			this.drawY = currentY * bodysize;
+			this.color = color;
+		}
+		
+		private Bodypart(Bodypart inFront) {
+			this(inFront.currentX, inFront.currentY, modifyColor(inFront.color));
+			this.targetX = currentX;
+			this.targetY = currentY;
 		}
 
+		private static Color modifyColor(Color color) {
+			int r = color.getRed();
+			int g = color.getGreen();
+			int b = color.getBlue();
+			return new Color(clamp(r + random.nextInt(-25, 25), 0, 255), clamp(g + random.nextInt(-25, 25), 0, 255), clamp(b + random.nextInt(-25, 25), 0, 255));
+		}
+		
+		private static int clamp(int val, int min, int max) {
+		    return Math.max(min, Math.min(max, val));
+		}
+		
 		public void draw(Graphics graphics) {
-			graphics.setColor(Color.WHITE);
-			graphics.fillRect((int) drawX, (int) drawY, bodysize, bodysize);
-			graphics.setColor(Color.LIGHT_GRAY);
-			graphics.drawRect((int) drawX, (int) drawY, bodysize, bodysize);
+			// draw body
+			graphics.setColor(color);
+			graphics.fillOval((int) drawX, (int) drawY, bodysize, bodysize);
+			// draw outline
+			graphics.setColor(Color.BLACK);
+			graphics.drawOval((int) drawX, (int) drawY, bodysize, bodysize);
 		}
 
 		public int getX() {
@@ -74,20 +98,22 @@ public class Snake {
 	public Snake(int bodysize) {
 		this.bodysize = bodysize;
 		body = new LinkedList<>();
-		head = new Bodypart(1, 1);
+		head = new Bodypart(1, 1, new Color(25, 255, 80));
 		direction = Direction.WEST;
 		head.targetX = head.currentX + 1;
 		head.targetY = head.currentY;
 		body.add(head);
+		int initalLength = 50;
+		for (int i = 0; i < initalLength; i++) {
+			body.add(new Bodypart(head));
+		}
 	}
 
 	public void draw(Graphics graphics) {
-		// draw body
-		body.forEach(part -> part.draw(graphics));
-
-		// draw head
-		graphics.setColor(Color.GREEN);
-		graphics.fillOval((int) head.drawX, (int) head.drawY, bodysize, bodysize);
+		Iterator<Bodypart> it = body.descendingIterator();
+		while (it.hasNext()) { 
+			it.next().draw(graphics);
+        } 
 	}
 
 	public void update(double tslf) {
@@ -139,11 +165,7 @@ public class Snake {
 
 		// check food
 		if (head.currentX == Main.food.getX() && head.currentY == Main.food.getY()) {
-			Bodypart last = body.peekLast();
-			Bodypart newPart = new Bodypart(last.currentX, last.currentY);
-			newPart.targetX = last.currentX;
-			newPart.targetY = last.currentY;
-			body.add(newPart);
+			body.add(new Bodypart(body.peekLast()));
 
 			Main.food.randomLocation(body);
 		}
