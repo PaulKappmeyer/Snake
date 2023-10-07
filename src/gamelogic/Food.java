@@ -20,17 +20,17 @@ public class Food {
 	}
 
 	public void randomLocation(LinkedList<Bodypart> snake) {
-		do {
+		outer: do {
 			x = random.nextInt(0, Main.SCREEN_WIDTH/size);
 			y = random.nextInt(0, Main.SCREEN_HEIGHT/size);
 
 			for (Bodypart part : snake) {
 				if (x == part.getX() && y == part.getY()) {
-					continue;
+					continue outer;
 				}
 			}
 			break;
-		} while(false);
+		} while(true);
 	}
 
 	public void draw(Graphics graphics) {
