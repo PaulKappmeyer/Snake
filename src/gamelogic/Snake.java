@@ -6,12 +6,15 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Random;
 
+import gameengine.MyMath;
+
 public class Snake {
 
 	private static final Random random = new Random();
 	
 	private int bodysize;
 	private LinkedList<Bodypart> body;
+	private LinkedList<Bodypart> removed;
 	private Bodypart head;
 	private Direction direction;
 
@@ -19,6 +22,12 @@ public class Snake {
 	private double tslm;
 	private final double MOVE_TIME = 0.125;
 
+	// smooth move animation time
+	private final double MOVE_ANIMATION_TIME = MOVE_TIME;
+	
+	// remove animation time
+	private final double REMOVE_ANIMATION_TIME = 0.25;
+	
 	public class Bodypart {
 		private int currentX;
 		private int currentY;
@@ -27,6 +36,7 @@ public class Snake {
 		private double drawX;
 		private double drawY;
 		private Color color;
+		private double removeAnimationTime; 
 
 		private Bodypart(int currentX, int currentY, Color color) {
 			this.currentX = currentX;
@@ -46,11 +56,23 @@ public class Snake {
 			int r = color.getRed();
 			int g = color.getGreen();
 			int b = color.getBlue();
-			return new Color(clamp(r + random.nextInt(-25, 25), 0, 255), clamp(g + random.nextInt(-25, 25), 0, 255), clamp(b + random.nextInt(-25, 25), 0, 255));
+			int newR = MyMath.clamp(r + random.nextInt(-25, 25), 0, 255);
+			int newG = MyMath.clamp(g + random.nextInt(-25, 25), 0, 255);
+			int newB = MyMath.clamp(b + random.nextInt(-25, 25), 0, 255);
+			return new Color(newR, newG, newB);
 		}
 		
-		private static int clamp(int val, int min, int max) {
-		    return Math.max(min, Math.min(max, val));
+		public void updateRemoveAnimation(double tslf) {
+			removeAnimationTime += tslf;
+			int alpha = (int) (255 * (1 - removeAnimationTime / REMOVE_ANIMATION_TIME));
+			alpha = Math.max(alpha, 0);
+			color = new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
+		}
+		
+		public void updateMoveAnimation() {
+			double percentage = MyMath.clamp(tslm/MOVE_ANIMATION_TIME, 0, 1);
+			drawX = (currentX + percentage * (targetX - currentX)) * bodysize;
+			drawY = (currentY + percentage * (targetY - currentY)) * bodysize;
 		}
 		
 		public void draw(Graphics graphics) {
@@ -98,6 +120,7 @@ public class Snake {
 	public Snake(int bodysize) {
 		this.bodysize = bodysize;
 		body = new LinkedList<>();
+		removed = new LinkedList<>();
 		head = new Bodypart(1, 1, new Color(25, 255, 80));
 		direction = Direction.WEST;
 		head.targetX = head.currentX + 1;
@@ -135,9 +158,11 @@ public class Snake {
 	}
 	
 	private void drawSnake(Graphics graphics) {
+		// draw parts that are going to be removed
+		removed.descendingIterator().forEachRemaining(part -> part.draw(graphics));
+		
 		// draw body
-		Iterator<Bodypart> it = body.descendingIterator();
-		it.forEachRemaining(part -> part.draw(graphics));
+		body.descendingIterator().forEachRemaining(part -> part.draw(graphics));
 		
 		// draw head: eyes
 		graphics.setColor(new Color(255, 255, 255, 200));
@@ -146,11 +171,12 @@ public class Snake {
 	}
 
 	public void update(double tslf) {
-		// update body: draw position
-		for (Bodypart part : body) {
-			part.drawX = (part.currentX + tslm/MOVE_TIME * (part.targetX - part.currentX)) * bodysize;
-			part.drawY = (part.currentY + tslm/MOVE_TIME * (part.targetY - part.currentY)) * bodysize;
-		}
+		// update: remove animation
+		removed.forEach(part -> part.updateRemoveAnimation(tslf));
+		removed.removeIf(part -> part.color.getAlpha() <= 0);
+		
+		// update: move animation
+		body.forEach(part -> part.updateMoveAnimation());
 
 		tslm += tslf;
 		if (tslm < MOVE_TIME) {
@@ -170,12 +196,12 @@ public class Snake {
 
 			current = next;
 		} 
-
+		
 		// update head: grid position
 		head.currentX = head.targetX;
 		head.currentY = head.targetY;
 
-		// check collision
+		// check collision with itself
 		int collision_index;
 		int size = body.size();
 		for (collision_index = 1; collision_index < size; collision_index++) {
@@ -189,7 +215,7 @@ public class Snake {
 			}
 		}
 		for (int i = collision_index; i < size; i++) {
-			body.removeLast();
+			removed.add(body.removeLast());
 		}
 
 		// check food
