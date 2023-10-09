@@ -202,20 +202,17 @@ public class Snake {
 		head.currentY = head.targetY;
 
 		// check collision with itself
-		int collision_index;
-		int size = body.size();
-		for (collision_index = 1; collision_index < size; collision_index++) {
-			Bodypart part = body.get(collision_index);
-			if (part == head) {
-				continue;
-			}
-
+		it = body.listIterator(1);
+		while(it.hasNext()) {
+			Bodypart part = it.next();
 			if (part.currentX == head.currentX && part.currentY == head.currentY) {
 				break;
 			}
 		}
-		for (int i = collision_index; i < size; i++) {
-			removed.add(body.removeLast());
+		while(it.hasNext()) {
+			Bodypart part = it.next();
+			removed.add(part);
+			it.remove();
 		}
 
 		// check food
