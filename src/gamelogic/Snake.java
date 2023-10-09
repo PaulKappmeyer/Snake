@@ -216,10 +216,11 @@ public class Snake {
 		}
 
 		// check food
-		if (head.currentX == Main.food.getX() && head.currentY == Main.food.getY()) {
-			body.add(new Bodypart(body.peekLast()));
-
-			Main.food.randomLocation(body);
+		for (Food f : Main.foods) {
+			if (head.currentX == f.getX() && head.currentY == f.getY()) {
+				body.add(new Bodypart(body.peekLast()));
+				f.randomLocation();
+			}
 		}
 
 		// move

@@ -20,8 +20,9 @@ public class Main extends GameBase implements KeyListener {
 	public static final int NUM_ROWS = SCREEN_HEIGHT/BODYSIZE;
 
 	
-	private Snake snake;
-	public static Food food;
+	public static Snake snake;
+	public static final int NUM_FOOD = 5;
+	public static Food[] foods;
 	
 	public static void main(String[] args) {
 		Main main = new Main();
@@ -31,8 +32,11 @@ public class Main extends GameBase implements KeyListener {
 	@Override
 	public void init() {
 		snake = new Snake(BODYSIZE);
-		food = new Food(BODYSIZE);
-		food.randomLocation(snake.getBody());
+		foods = new Food[NUM_FOOD];
+		for (int i = 0; i < NUM_FOOD; i++) {
+			foods[i] = new Food(BODYSIZE);
+			foods[i].randomLocation();
+		}
 		
 		// Adding inputManagers to window
 		window.addKeyListener(this);
@@ -48,7 +52,9 @@ public class Main extends GameBase implements KeyListener {
 		graphics.setColor(Color.LIGHT_GRAY);
 		graphics.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-		food.draw(graphics);
+		for (Food f : foods) {
+			f.draw(graphics);
+		}
 		
 		snake.draw(graphics);
 		
