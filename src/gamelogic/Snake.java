@@ -28,6 +28,8 @@ public class Snake {
 	// remove animation time
 	private final double REMOVE_ANIMATION_TIME = 0.25;
 	
+	private int highscore;
+	
 	public class Bodypart {
 		private int currentX;
 		private int currentY;
@@ -130,6 +132,7 @@ public class Snake {
 		for (int i = 0; i < initalLength; i++) {
 			body.add(new Bodypart(body.peekLast()));
 		}
+		highscore = body.size();
 	}
 
 	public void draw(Graphics graphics) {
@@ -219,6 +222,7 @@ public class Snake {
 		for (Food f : Main.foods) {
 			if (head.currentX == f.getX() && head.currentY == f.getY()) {
 				body.add(new Bodypart(body.peekLast()));
+				highscore++;
 				f.randomLocation();
 			}
 		}
@@ -272,6 +276,10 @@ public class Snake {
 
 	public int getLength() {
 		return body.size();
+	}
+	
+	public int getHighscore() {
+		return highscore;
 	}
 
 	public LinkedList<Bodypart> getBody(){

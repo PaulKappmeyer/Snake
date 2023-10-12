@@ -60,6 +60,7 @@ public class Main extends GameBase implements KeyListener {
 		
 		graphics.setColor(Color.BLACK);
 		graphics.drawString("Länge: " + snake.getLength(), 10, 10);
+		graphics.drawString("Highscore: " + snake.getHighscore(), 100, 10);
 	}
 
 	@Override
