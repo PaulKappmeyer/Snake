@@ -222,7 +222,9 @@ public class Snake {
 		for (Food f : Main.foods) {
 			if (head.currentX == f.getX() && head.currentY == f.getY()) {
 				body.add(new Bodypart(body.peekLast()));
-				highscore++;
+				if (body.size() > highscore) {
+					highscore = body.size();
+				}
 				f.randomLocation();
 			}
 		}
